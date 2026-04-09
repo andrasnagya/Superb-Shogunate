@@ -118,7 +118,7 @@ Supports **Claude Code**, **OpenAI Codex**, **GitHub Copilot**, and **Kimi Code*
 Superb Shogunate includes the full planning-to-execution pipeline:
 
 ```
-PLANNING (Claude Code session)
+/superb-plan <Specification of your project> (In Claude Code session)
 │
 │  brainstorming (bundled Superpowers)
 │  └── produces: design.md
@@ -577,70 +577,72 @@ If you prefer to install dependencies manually:
 
 ### After Setup
 
-Whichever option you chose, **10 AI agents** are automatically launched:
+Whichever option you chose, **10 AI agents** are launched in the background:
 
 | Agent | Role | Count |
 |-------|------|-------|
-| 🏯 Shogun | Supreme commander — receives your orders | 1 |
+| 🏯 Shogun | Supreme commander — receives whispers from soba-yonin | 1 |
 | 📋 Karo | Manager — distributes tasks, quality checks | 1 |
 | ⚔️ Ashigaru | Workers — execute implementation tasks in parallel | 7 |
 | 🧠 Gunshi | Strategist — handles analysis, evaluation, and design | 1 |
 
-Two tmux sessions are created:
-- `shogun` — connect here to give commands
-- `multiagent` — Karo, Ashigaru, and Gunshi running in the background
+Two tmux sessions run in the background:
+- `shogun` — the Shogun's chamber (soba-yonin whispers orders here)
+- `multiagent` — Karo, Ashigaru, and Gunshi executing the work
+
+**You never need to enter tmux.** soba-yonin is the bridge between your main Claude Code session and the Shogunate — it delivers commands and reports progress right where you are.
 
 ---
 
 ## How It Works
 
-### Step 1: Connect to the Shogun
+### Step 1: Plan the work
 
-After running `shutsujin_departure.sh`, all agents automatically load their instructions and are ready.
+Run `/superb-plan` in your Claude Code session. The planning pipeline walks you through:
+1. **Brainstorming** — explore the problem, design the solution → `design.md`
+2. **Writing plans** — break the design into implementation tasks → `implementation.md`
+3. **Choose execution** — Shogunate (10 agents in parallel) or Subagent-driven (single session)
 
-Open a new terminal and connect:
+### Step 2: soba-yonin delivers
 
-```bash
-tmux attach-session -t shogun
+When you pick the Shogunate path, soba-yonin takes over automatically:
+1. Launches the Shogunate if not already running
+2. Extracts architecture from `design.md` (semantic, heading-agnostic)
+3. Splits the plan into per-command YAML with dependency graphs
+4. Auto-registers the project
+5. Whispers the commands into the Shogun's ear (writes to the queue, notifies Karo)
+
+The Shogun delegates to Karo, Karo distributes to Ashigaru — all without you leaving your session.
+
+### Step 3: Monitor from your session
+
+soba-yonin offers real-time monitoring right in your main Claude Code context:
+
+```
+[3m 42s] Progress: 3/8 commands complete
+
+  Wave 1: cmd_048 (Config)    — DONE ✓  [ashigaru1, 1m 42s]
+  Wave 2: cmd_049 (CLI)       — DONE ✓  [ashigaru2, 2m 10s]
+          cmd_050 (Parser)    — DONE ✓  [ashigaru3, 1m 05s]
+  Wave 3: cmd_051 (Tests)     — IN PROGRESS [ashigaru1]
+  Wave 4: cmd_052 (Integration) — PENDING (blocked by cmd_051)
+
+  QC: 3/8 verified by Gunshi (3 pass, 0 fail)
 ```
 
-### Step 2: Give your first order
-
-The Shogun is already initialized — just give a command:
-
-```
-Research the top 5 JavaScript frameworks and create a comparison table
-```
-
-The Shogun will:
-1. Write the task to a YAML file
-2. Notify the Karo (manager)
-3. Return control to you immediately — no waiting!
-
-Meanwhile, the Karo distributes tasks to Ashigaru workers for parallel execution.
-
-### Step 3: Check progress
-
-Open `dashboard.md` in your editor for a real-time status view:
-
-```markdown
-## In Progress
-| Worker | Task | Status |
-|--------|------|--------|
-| Ashigaru 1 | Research React | Running |
-| Ashigaru 2 | Research Vue | Running |
-| Ashigaru 3 | Research Angular | Completed |
-```
+No need to open `dashboard.md` or attach to tmux — progress comes to you.
 
 ### Detailed flow
 
 ```
-You: "Research the top 5 MCP servers and create a comparison table"
+You: /superb-plan "Research the top 5 MCP servers and create a comparison table"
+  → brainstorming → design.md (you approve)
+  → writing-plans → implementation.md (you approve)
+  → you pick Shogunate
+  → soba-yonin whispers into the Shogun's ear
 ```
 
-The Shogun writes the task to `queue/shogun_to_karo.yaml` and wakes the Karo. Control returns to you immediately.
-
-The Karo breaks the task into subtasks:
+soba-yonin extracts the plan, generates command YAML, and delivers it to the queue. The Shogun delegates to Karo. Karo breaks the task into subtasks:
 
 | Worker | Assignment |
 |--------|-----------|
@@ -656,7 +658,7 @@ All 5 Ashigaru research simultaneously. You can watch them work in real time:
   <img src="images/company-creed-all-panes.png" alt="Ashigaru agents working in parallel across tmux panes" width="900">
 </p>
 
-Results appear in `dashboard.md` as they complete.
+Results flow back through soba-yonin's monitoring into your main session — or check `dashboard.md` if you prefer.
 
 ---
 
@@ -664,24 +666,25 @@ Results appear in `dashboard.md` as they complete.
 
 ### ⚡ 1. Parallel Execution
 
-One command spawns up to 8 parallel tasks:
+One `/superb-plan` spawns up to 8 parallel tasks:
 
 ```
-You: "Research 5 MCP servers"
+/superb-plan → design.md → implementation.md
+→ soba-yonin delivers 5 commands to the Shogunate
 → 5 Ashigaru start researching simultaneously
 → Results in minutes, not hours
 ```
 
 ### 🔄 2. Non-Blocking Workflow
 
-The Shogun delegates instantly and returns control to you:
+soba-yonin delivers and returns control to you immediately:
 
 ```
-You: Command → Shogun: Delegates → You: Give next command immediately
-                                       ↓
-                       Workers: Execute in background
-                                       ↓
-                       Dashboard: Shows results
+You: /superb-plan → soba-yonin: Delivers → You: Keep working in your session
+                                                ↓
+                                Workers: Execute in background
+                                                ↓
+                                soba-yonin: Reports progress
 ```
 
 No waiting for long tasks to finish.
@@ -816,9 +819,9 @@ screenshot:
 ```
 
 ```
-# Just tell the Shogun:
-You: "Check the latest screenshot"
-You: "Look at the last 2 screenshots"
+# Include in your /superb-plan context, or tell the Shogun directly:
+"Check the latest screenshot"
+"Look at the last 2 screenshots"
 → AI instantly reads and analyzes your screen captures
 ```
 
@@ -1326,7 +1329,7 @@ Model names are stored as `@model_name` and current task summaries as `@current_
 
 No skills are included out of the box. Skills emerge organically during operation — you approve candidates from `dashboard.md` as they're discovered.
 
-Invoke skills with `/skill-name`. Just tell the Shogun: "run /skill-name".
+Invoke skills with `/skill-name` in your Claude Code session. soba-yonin and the Shogun both understand skill invocations.
 
 ### Included Skills (committed to repo)
 
