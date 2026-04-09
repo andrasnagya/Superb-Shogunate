@@ -20,7 +20,7 @@ It vendors and modifies [Superpowers](https://github.com/obra/superpowers) by Je
 
 The bridge between these two systems is **soba-yonin** — a skill that transforms Superpowers planning output into Shogun-protocol YAML commands, enabling a seamless flow from design to parallel multi-agent execution.
 
-**Requirements:** tmux, bash 4+, Claude Code, at least one of: [Claude Code](https://claude.ai/code) / Codex / Copilot / Kimi
+## **Requirements:** tmux, bash 4+, Claude Code, at least one of: [Claude Code](https://claude.ai/code) / Codex / Copilot / Kimi
 ---
 
 ## Quick Start
@@ -37,13 +37,16 @@ claude --dangerously-skip-permissions
 
 # Build a test project with:
 /superb-plan
-    Lets create the "pong" game for one and two user in this repo.
-    We are going to make design decisions and planning strictly in textual mode!
-    Choose always the simplest solution and the suggested resolution for any question that comes up in the design phase
-    Jump directly to implementation writing after design!
+  Let's create the "pong" game for one and two players in this repository.
+  We are going to make design decisions and plan strictly in text.
+  Always choose the simplest solution and the suggested resolution for any questions that come up during the design phase.
+  Move directly to implementation after completing the design.
+
 
 # Play the game yourself!
 ```
+
+
 ### Why `sudo`?
 > `first_setup.sh` installs system packages (tmux, python3), configures MCP, and runs OAuth authentication — all of which require interactive terminal input. soba-yonin cannot run this for you.
 
