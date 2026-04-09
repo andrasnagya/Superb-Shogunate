@@ -1,0 +1,263 @@
+# Bloom Task Corpus — Issue #53 Dynamic Model Routing test data
+# L1-L6 x 3 tasks each = 18 tasks
+# Purpose: Used for Bloom classification accuracy tests (Dim B) / output quality comparison experiments (Dim D)
+# verifiable_condition: Automatically verifiable pass/fail criteria
+
+bloom_tasks:
+
+  # ─────────────────────────────────────────────
+  # L1: Remember — Pattern application, routine processing
+  # Pass criteria: Correct value is retrieved/modified
+  # ─────────────────────────────────────────────
+
+  - id: L1-01
+    bloom_level: 1
+    category: remember
+    description: |
+      Read the current value of ntfy_topic in config/settings.yaml and report it as-is.
+    expected_output_type: exact_value
+    verifiable_condition: "output matches value in settings.yaml ntfy_topic"
+    difficulty: trivial
+    notes: "YAML reading only. No reasoning required."
+
+  - id: L1-02
+    bloom_level: 1
+    category: remember
+    description: |
+      Return a list of files in the queue/inbox/ directory.
+      File names only — no additional details needed.
+    expected_output_type: file_list
+    verifiable_condition: "output matches ls queue/inbox/"
+    difficulty: trivial
+    notes: "Directory listing only."
+
+  - id: L1-03
+    bloom_level: 1
+    category: remember
+    description: |
+      Count the total number of lines in lib/cli_adapter.sh and report it.
+    expected_output_type: number
+    verifiable_condition: "output matches wc -l lib/cli_adapter.sh"
+    difficulty: trivial
+    notes: "Command execution result reporting only."
+
+  # ─────────────────────────────────────────────
+  # L2: Understand — Explain, summarize, rephrase
+  # Pass criteria: Explanation containing the specified key points
+  # ─────────────────────────────────────────────
+
+  - id: L2-01
+    bloom_level: 2
+    category: understand
+    description: |
+      Explain what the get_recommended_model() function in lib/cli_adapter.sh does,
+      covering the following 3 points in 3 sentences or fewer:
+      (1) What is the input, (2) What is the output, (3) How does it optimize cost
+    expected_output_type: explanation
+    verifiable_condition: "explanation contains: bloom_level as input, model name as output, cost_group priority"
+    difficulty: easy
+    notes: "Code reading + explanation. No implementation required."
+
+  - id: L2-02
+    bloom_level: 2
+    category: understand
+    description: |
+      Explain in 2 sentences why scripts/inbox_write.sh uses flock.
+      Include "why flock is necessary" and "what happens without flock."
+    expected_output_type: explanation
+    verifiable_condition: "explanation contains: concurrent writes, race condition, data corruption"
+    difficulty: easy
+    notes: "Verification of flock concept understanding."
+
+  - id: L2-03
+    bloom_level: 2
+    category: understand
+    description: |
+      Explain what happens (or does not happen) in the current implementation
+      when bloom_routing in config/settings.yaml is changed from "off" to "auto."
+    expected_output_type: explanation
+    verifiable_condition: "explanation states: currently nothing happens, karo.md not wired, Phase 2-4 not integrated"
+    difficulty: medium
+    notes: "Verifying understanding of current implementation. Correct answer: 'changing it has no effect.'"
+
+  # ─────────────────────────────────────────────
+  # L3: Apply — Implementation of known patterns
+  # Pass criteria: File is correctly created/executed
+  # ─────────────────────────────────────────────
+
+  - id: L3-01
+    bloom_level: 3
+    category: apply
+    description: |
+      Create settings_spark_only.yaml in tests/fixtures/.
+      Contents: Define only gpt-5.3-codex-spark (max_bloom: 3, cost_group: chatgpt_pro) in capability_tiers.
+      Include bloom_routing: "off".
+    expected_output_type: file_created
+    verifiable_condition: "file exists AND yaml valid AND only spark in capability_tiers"
+    difficulty: easy
+    notes: "Application of existing YAML pattern."
+
+  - id: L3-02
+    bloom_level: 3
+    category: apply
+    description: |
+      Execute the following bash script and save the result to /tmp/bloom_test_output.txt:
+      source lib/cli_adapter.sh && get_capability_tier "gpt-5.3-codex-spark"
+      (Execute from the project root)
+    expected_output_type: command_output
+    verifiable_condition: "file /tmp/bloom_test_output.txt contains '3'"
+    difficulty: easy
+    notes: "Application of existing function call pattern."
+
+  - id: L3-03
+    bloom_level: 3
+    category: apply
+    description: |
+      Run only the TC-DMR-001 test case from tests/unit/test_dynamic_model_routing.bats
+      and report whether it PASSed or FAILed.
+      Command: bats --filter "TC-DMR-001" tests/unit/test_dynamic_model_routing.bats
+    expected_output_type: test_result
+    verifiable_condition: "output reports PASS or FAIL with test name"
+    difficulty: easy
+    notes: "Application of test execution."
+
+  # ─────────────────────────────────────────────
+  # L4: Analyze — Investigation, root cause identification, code review
+  # Pass criteria: Root cause or problem identified
+  # ─────────────────────────────────────────────
+
+  - id: L4-01
+    bloom_level: 4
+    category: analyze
+    description: |
+      Investigate the behavior when bloom_level=0 or bloom_level=7 is passed to
+      get_recommended_model() in lib/cli_adapter.sh, and report:
+      (1) What actually happens (2) Whether there are bugs/vulnerabilities (3) Whether improvements are needed
+    expected_output_type: analysis_report
+    verifiable_condition: "report identifies: input validation check at line ~435, exit 1 on invalid"
+    difficulty: medium
+    notes: "Composite task: code reading + execution + analysis."
+
+  - id: L4-02
+    bloom_level: 4
+    category: analyze
+    description: |
+      Analyze the current instructions/karo.md and identify why dynamic model routing
+      does not function even when bloom_routing is set to "auto."
+      Specifically: which function calls are missing, and which files need additions.
+    expected_output_type: gap_analysis
+    verifiable_condition: "identifies: get_recommended_model() not called, find_agent_for_model() missing, karo.md task distribution step"
+    difficulty: medium
+    notes: "Design gap analysis. Typical L4 task."
+
+  - id: L4-03
+    bloom_level: 4
+    category: analyze
+    description: |
+      Read test cases TC-DMR-030 and TC-DMR-110 for get_recommended_model() and
+      needs_model_switch() in lib/cli_adapter.sh, and analyze the division of
+      responsibilities between these 2 functions.
+      Include the design intent behind "why they were separated into 2 functions."
+    expected_output_type: design_analysis
+    verifiable_condition: "analysis distinguishes: selection (what model) vs decision (should switch)"
+    difficulty: medium
+    notes: "Reverse-engineering design intent from tests."
+
+  # ─────────────────────────────────────────────
+  # L5: Evaluate — Design validity judgment, comparative recommendation
+  # Pass criteria: 3+ proposals + recommendation with rationale
+  # ─────────────────────────────────────────────
+
+  - id: L5-01
+    bloom_level: 5
+    category: evaluate
+    description: |
+      Evaluate the following 3 proposals for implementing find_agent_for_model(recommended_model)
+      and recommend the best option:
+      Option A: Scan all cli.agents in settings.yaml to find ashigaru matching the model
+      Option B: Reverse-lookup capability_tiers to pre-build and cache a list of ashigaru for the target model
+      Option C: Real-time scan of tmux @model_name option (config-file independent)
+      Evaluation criteria: implementation cost, accuracy, performance, fault tolerance
+    expected_output_type: comparative_evaluation
+    verifiable_condition: "response includes: 3 options evaluated, recommendation with 3+ criteria, trade-offs acknowledged"
+    difficulty: hard
+    notes: "Typical L5. Requires comparison + recommendation with rationale. Deep comparison of 3 options is difficult for Spark."
+
+  - id: L5-02
+    bloom_level: 5
+    category: evaluate
+    description: |
+      A mixed CLI configuration of ashigaru1-3=Codex-Spark, ashigaru4-5=Sonnet,
+      ashigaru6-7=Opus has been proposed for Bloom routing testing on VPS. Evaluate this design's validity.
+      Include the following perspectives:
+      (1) Coverage for each Bloom level (2) Parallel processing capability (3) Cost efficiency
+      (4) Propose improvements if any
+    expected_output_type: design_evaluation
+    verifiable_condition: "evaluation covers: coverage gaps (L4 only 2 agents), cost groups, parallelism, at least 1 improvement"
+    difficulty: hard
+    notes: "Design evaluation. Improvement proposals required."
+
+  - id: L5-03
+    bloom_level: 5
+    category: evaluate
+    description: |
+      Evaluate the following claim about the effectiveness of Bloom Taxonomy-based model routing:
+      "Even if an L5 task (design evaluation) is executed with gpt-5.3-codex-spark (max_bloom=3),
+      the quality will be no different from claude-sonnet-4-6 if the prompt is well-crafted."
+      Evaluate the validity of this claim, including theoretical rationale and empirical verification methods.
+    expected_output_type: argument_evaluation
+    verifiable_condition: "evaluation includes: capability limitation argument, empirical test proposal, nuanced conclusion"
+    difficulty: hard
+    notes: "Tests critical thinking. Requires rationale, not simple affirmation/denial."
+
+  # ─────────────────────────────────────────────
+  # L6: Create — New design, new architecture
+  # Pass criteria: Contains novel design elements not present in existing work
+  # ─────────────────────────────────────────────
+
+  - id: L6-01
+    bloom_level: 6
+    category: create
+    description: |
+      Write a concrete implementation design document for Issue #53 Phase 4 (Quality Feedback Accumulation).
+      Include the following:
+      (1) Schema definition for model_performance.yaml
+      (2) QC score collection timing and trigger design
+      (3) Mechanism by which feedback influences get_recommended_model() selection
+      (4) Automatic degradation detection and threshold design
+      Design with awareness of the limitations of the existing append_model_performance() function.
+    expected_output_type: design_document
+    verifiable_condition: "document contains: YAML schema, collection trigger, feedback mechanism, degradation threshold"
+    difficulty: expert
+    notes: "Phase 4 design. Requires understanding of existing function limitations."
+
+  - id: L6-02
+    bloom_level: 6
+    category: create
+    description: |
+      Design a "Shadow Mode" architecture for safely validating bloom_routing
+      on VPS without affecting the production environment.
+      Shadow Mode requirements:
+      - Apply bloom routing judgment to all tasks, but distribute tasks using the conventional method
+      - Log which ashigaru bloom routing would have selected vs which ashigaru was actually used
+      - Include a foundation for recording quality differences and calculating statistical significance
+      - Add zero additional latency to production tasks
+    expected_output_type: architecture_design
+    verifiable_condition: "design includes: parallel decision path, logging mechanism, statistical comparison, zero-latency constraint"
+    difficulty: expert
+    notes: "Safe experiment design. Spark cannot handle the compound requirements."
+
+  - id: L6-03
+    bloom_level: 6
+    category: create
+    description: |
+      If adding an autonomous improvement loop to multi-agent-shogun
+      (task -> automatic Bloom classification -> optimal model selection -> execution -> quality evaluation ->
+      selection criteria update), design the most appropriate architecture
+      as an extension of the existing karo.md / gunshi.md / cli_adapter.sh.
+      Specifically include: (1) Division of responsibilities across components (2) Persistence of feedback data
+      (3) Guardrail design to prevent the loop from learning in a degrading direction.
+    expected_output_type: system_design
+    verifiable_condition: "design covers: component responsibilities, persistence strategy, guardrails against regression"
+    difficulty: expert
+    notes: "Self-improving system design. The most complex L6 task."

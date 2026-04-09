@@ -1,0 +1,32 @@
+# multi-agent-shogun configuration file
+
+# Language setting
+# ja: Sengoku English only (no parenthetical translations)
+# en: Sengoku English + plain translation in parentheses
+# Other language codes (es, zh, ko, fr, de, etc.) also supported
+language: ja
+
+# Shell setting
+# bash: bash prompt (default)
+# zsh: zsh prompt
+shell: bash
+
+# Skill settings
+skill:
+  # Skill save path (saved with shogun- prefix on the skill name)
+  save_path: "~/.claude/skills/"
+
+  # Local skill save path (for this project only, relative to project root)
+  local_path: "skills/"
+
+# Logging settings
+logging:
+  level: info  # debug | info | warn | error
+  path: "logs/"
+
+# Model defaults for leadership agents
+# Override per-agent by setting cli.agents.<name>.model
+models:
+  shogun: opus
+  karo: opus
+  gunshi: opus
