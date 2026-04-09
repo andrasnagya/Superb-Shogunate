@@ -20,7 +20,8 @@ It vendors and modifies [Superpowers](https://github.com/obra/superpowers) by Je
 
 The bridge between these two systems is **soba-yonin** — a skill that transforms Superpowers planning output into Shogun-protocol YAML commands, enabling a seamless flow from design to parallel multi-agent execution.
 
-## **Requirements:** tmux, bash 4+, Claude Code, at least one of: [Claude Code](https://claude.ai/code) / Codex / Copilot / Kimi
+### **Requirements:** 
+tmux, bash 4+, Claude Code, at least one of: [Claude Code](https://claude.ai/code) / Codex / Copilot / Kimi
 ---
 
 ## Quick Start
