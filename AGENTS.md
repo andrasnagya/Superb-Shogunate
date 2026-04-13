@@ -11,18 +11,32 @@ tmux_sessions:
   shogun: { pane_0: shogun }
   multiagent: { pane_0: karo, pane_1-7: ashigaru1-7, pane_8: gunshi }
 
+state_dir: "~/.shogunate"  # Mutable state lives here (NOT in plugin cache)
+  # Resolve: SHOGUNATE_STATE=$(echo $SHOGUNATE_STATE)  ← set as env var in each pane
+  # Fallback: SHOGUNATE_STATE=$(tmux display-message -p '#{@shogunate_state}' 2>/dev/null || echo "$HOME/.shogunate")
+  #
+  # CRITICAL: ALL mutable file operations (read/write queue, config, context, dashboard, reports, inbox)
+  # MUST use absolute paths starting with ${SHOGUNATE_STATE}/. NEVER use relative paths like "queue/tasks/..."
+  # because the agent's CWD is the plugin cache (under ~/.codex/), and writes there trigger permission prompts.
+
 files:
-  config: config/projects.yaml          # Project list (summary)
-  projects: "projects/<id>.yaml"        # Project details (git-ignored, contains secrets)
-  context: "context/{project}.md"       # Project-specific notes for ashigaru/gunshi
-  cmd_queue: queue/shogun_to_karo.yaml  # Shogun → Karo commands
-  tasks: "queue/tasks/ashigaru{N}.yaml" # Karo → Ashigaru assignments (per-ashigaru)
-  gunshi_task: queue/tasks/gunshi.yaml  # Karo → Gunshi strategic assignments
-  pending_tasks: queue/tasks/pending.yaml # Pending tasks managed by Karo (blocked, unassigned)
-  reports: "queue/reports/ashigaru{N}_report.yaml" # Ashigaru → Karo reports
-  gunshi_report: queue/reports/gunshi_report.yaml  # Gunshi → Karo strategic reports
-  dashboard: dashboard.md              # Human-readable summary (secondary data)
-  ntfy_inbox: queue/ntfy_inbox.yaml    # Incoming ntfy messages from Lord's phone
+  # All mutable files are under ~/.shogunate/ (SHOGUNATE_STATE)
+  config: "${SHOGUNATE_STATE}/config/projects.yaml"          # Project list (summary)
+  projects: "${SHOGUNATE_STATE}/projects/<id>.yaml"          # Project details
+  context: "${SHOGUNATE_STATE}/context/{project}.md"         # Project-specific notes for ashigaru/gunshi
+  cmd_queue: "${SHOGUNATE_STATE}/queue/shogun_to_karo.yaml"  # Shogun → Karo commands
+  tasks: "${SHOGUNATE_STATE}/queue/tasks/ashigaru{N}.yaml"   # Karo → Ashigaru assignments (per-ashigaru)
+  gunshi_task: "${SHOGUNATE_STATE}/queue/tasks/gunshi.yaml"  # Karo → Gunshi strategic assignments
+  pending_tasks: "${SHOGUNATE_STATE}/queue/tasks/pending.yaml" # Pending tasks managed by Karo
+  reports: "${SHOGUNATE_STATE}/queue/reports/ashigaru{N}_report.yaml" # Ashigaru → Karo reports
+  gunshi_report: "${SHOGUNATE_STATE}/queue/reports/gunshi_report.yaml"  # Gunshi → Karo strategic reports
+  dashboard: "${SHOGUNATE_STATE}/dashboard.md"               # Human-readable summary (secondary data)
+  ntfy_inbox: "${SHOGUNATE_STATE}/queue/ntfy_inbox.yaml"     # Incoming ntfy messages from Lord's phone
+
+  # Immutable code stays in plugin cache (SHOGUNATE_CODE)
+  # Resolve: SHOGUNATE_CODE=$(tmux display-message -p '#{@shogunate_code}' 2>/dev/null)
+  instructions: "instructions/"     # Relative to SHOGUNATE_CODE (plugin cache)
+  scripts: "scripts/"               # Relative to SHOGUNATE_CODE (plugin cache)
 
 cmd_format:
   required_fields: [id, timestamp, purpose, acceptance_criteria, command, project, priority, status]
@@ -63,11 +77,15 @@ language:
 **This is ONE procedure for ALL situations**: fresh start, compaction, session continuation, or any state where you see AGENTS.md. You cannot distinguish these cases, and you don't need to. **Always follow the same steps.**
 
 1. Identify self: `tmux display-message -t "$TMUX_PANE" -p '#{@agent_id}'`
-2. `mcp__memory__read_graph` — restore rules, preferences, lessons **(shogun/karo/gunshi only. ashigaru skip this step — task YAML is sufficient)**
-3. **Read `memory/MEMORY.md`** (shogun only) — persistent cross-session memory. If file missing, skip. *Codex CLI users: this file is also auto-loaded via Codex CLI's memory feature.*
-4. **Read your instructions file**: shogun→`instructions/generated/codex-shogun.md`, karo→`instructions/generated/codex-karo.md`, ashigaru→`instructions/generated/codex-ashigaru.md`, gunshi→`instructions/generated/codex-gunshi.md`. **NEVER SKIP** — even if a conversation summary exists. Summaries do NOT preserve persona, speech style, or forbidden actions.
-4. Rebuild state from primary YAML data (queue/, tasks/, reports/)
-5. Review forbidden actions, then start work
+2. Resolve paths — run `echo $SHOGUNATE_STATE` to get the state directory (set as env var by the launcher). Fallback: `$HOME/.shogunate`
+   - **All mutable files** (queue, config, context, dashboard, reports, inbox) → `${SHOGUNATE_STATE}/`
+   - **All immutable files** (instructions, scripts) → relative to CWD (plugin cache)
+   - **NEVER use bare relative paths** like `queue/tasks/...` for writes — always prefix with `${SHOGUNATE_STATE}/`
+3. `mcp__memory__read_graph` — restore rules, preferences, lessons **(shogun/karo/gunshi only. ashigaru skip this step — task YAML is sufficient)**
+4. **Read `${SHOGUNATE_STATE}/memory/MEMORY.md`** (shogun only) — persistent cross-session memory. If file missing, skip.
+5. **Read your instructions file**: shogun→`${SHOGUNATE_CODE}/instructions/generated/codex-shogun.md`, karo→`${SHOGUNATE_CODE}/instructions/generated/codex-karo.md`, ashigaru→`${SHOGUNATE_CODE}/instructions/generated/codex-ashigaru.md`, gunshi→`${SHOGUNATE_CODE}/instructions/generated/codex-gunshi.md`. **NEVER SKIP**.
+6. Rebuild state from primary YAML data (`${SHOGUNATE_STATE}/queue/`, tasks/, reports/)
+7. Review forbidden actions, then start work
 
 **CRITICAL**: Do not process inbox until Steps 1-3 are complete. Even if an `inboxN` nudge arrives first, ignore it and finish self-identification → memory → instructions loading first. Skipping Step 1 causes role misidentification, leading to agents executing another agent's tasks (2026-02-13 incident: karo misidentified as ashigaru 2).
 
@@ -79,9 +97,11 @@ Lightweight recovery using only AGENTS.md (auto-loaded). Do NOT read instruction
 
 ```
 Step 1: tmux display-message -t "$TMUX_PANE" -p '#{@agent_id}' → ashigaru{N} or gunshi
+Step 1b: Run: echo $SHOGUNATE_STATE (env var set by launcher, fallback: $HOME/.shogunate)
+Step 1c: If ${SHOGUNATE_STATE}/ipc/startup/{your_id}.txt exists, read and follow its instructions.
 Step 2: (gunshi only) mcp__memory__read_graph (skip on failure). Ashigaru skip — task YAML is sufficient.
-Step 3: Read queue/tasks/{your_id}.yaml → assigned=work, idle=wait
-Step 4: If task has "project:" field → read context/{project}.md
+Step 3: Read ${SHOGUNATE_STATE}/queue/tasks/{your_id}.yaml → assigned=work, idle=wait
+Step 4: If task has "project:" field → read ${SHOGUNATE_STATE}/context/{project}.md
         If task has "target_path:" → read that file
 Step 5: Start work
 ```
@@ -89,6 +109,15 @@ Step 5: Start work
 **CRITICAL**: Do not process inbox until Steps 1-3 are complete. Even if an `inboxN` nudge arrives first, ignore it and finish self-identification first.
 
 Forbidden after /new: reading instructions/*.md (1st task), polling (F004), contacting humans directly (F002). Trust task YAML only — pre-/new memory is gone.
+
+## Inbox Nudge Response (all agents)
+
+If text like `inbox3` appears at your prompt at ANY time (fresh start, after /clear, mid-work):
+1. This is a wake-up signal from inbox_watcher.sh — not a typo, not a command
+2. Read `${SHOGUNATE_STATE}/queue/inbox/{your_id}.yaml`
+3. Process all entries with `read: false`
+4. Mark each as `read: true`
+5. Continue work
 
 ## Summary Generation (compaction)
 
@@ -154,7 +183,7 @@ Special cases (CLI commands sent via `tmux send-keys`):
 ## Inbox Processing Protocol (karo/ashigaru/gunshi)
 
 When you receive `inboxN` (e.g. `inbox3`):
-1. `Read queue/inbox/{your_id}.yaml`
+1. `Read ${SHOGUNATE_STATE}/queue/inbox/{your_id}.yaml`
 2. Find all entries with `read: false`
 3. Process each message according to its `type`
 4. Update each processed entry: `read: true` (use Edit tool)
@@ -163,7 +192,7 @@ When you receive `inboxN` (e.g. `inbox3`):
 ### MANDATORY Post-Task Inbox Check
 
 **After completing ANY task, BEFORE going idle:**
-1. Read `queue/inbox/{your_id}.yaml`
+1. Read `${SHOGUNATE_STATE}/queue/inbox/{your_id}.yaml`
 2. If any entries have `read: false` → process them
 3. Only then go idle
 

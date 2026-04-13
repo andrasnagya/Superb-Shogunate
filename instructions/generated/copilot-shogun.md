@@ -236,8 +236,12 @@ Read-cost controls:
 
 ## Inbox Processing Protocol (karo/ashigaru/gunshi)
 
-When you receive `inboxN` (e.g. `inbox3`):
-1. `Read queue/inbox/{your_id}.yaml`
+**How the nudge arrives:** The text `inboxN` (e.g. `inbox3`) appears directly at your
+command prompt — typed by inbox_watcher.sh via tmux. It is NOT a command you need to run.
+It is a signal meaning "you have N unread messages."
+
+**When you see `inboxN` at the prompt:**
+1. Read `${SHOGUNATE_STATE}/queue/inbox/{your_id}.yaml`
 2. Find all entries with `read: false`
 3. Process each message according to its `type`
 4. Update each processed entry: `read: true` (use Edit tool)
@@ -268,10 +272,24 @@ Race condition is eliminated: context reset wipes old context. Agent re-reads YA
 
 | Direction | Method | Reason |
 |-----------|--------|--------|
-| Ashigaru/Gunshi → Karo | Report YAML + inbox_write | File-based notification |
+| Ashigaru → Gunshi | Report YAML + inbox_write | Quality check delegation |
+| Gunshi → Karo | QC report + inbox_write | Aggregated QC results |
 | Karo → Shogun/Lord | dashboard.md update only | **inbox to shogun FORBIDDEN** — prevents interrupting Lord's input |
-| Karo → Gunshi | YAML + inbox_write | Strategic task delegation |
+| Karo → Gunshi | YAML + inbox_write | Strategic task or QC delegation |
 | Top → Down | YAML + inbox_write | Standard wake-up |
+
+### Completion Detection Fallback
+
+If Karo has not received a Gunshi inbox within 5 minutes of dispatching tasks:
+1. Scan `queue/tasks/ashigaru*.yaml` for `status: done`
+2. Scan `queue/reports/ashigaru*_report.yaml` for new reports
+3. If completed tasks found with no Gunshi QC → re-trigger Gunshi via inbox_write:
+   `bash scripts/inbox_write.sh gunshi "Karo fallback: QC needed for {task_ids}. Review reports." qc_request karo`
+4. Wait up to 5 minutes for Gunshi QC response
+5. If still no response → re-trigger Gunshi a second time (same command)
+6. Wait up to 5 minutes again
+7. If still no response after 2 retries → process reports directly (skip QC)
+8. Log: "Fallback completion detection triggered — Gunshi chain broken after 2 retries"
 
 ## File Operation Rule
 
@@ -393,6 +411,28 @@ Note:
 - Normally, "idle" is a UI state (no active task), not a YAML status value.
 - Exception (placeholder only): `status: idle` is allowed **only** when `task_id: null` (clean start template written by `shutsujin_departure.sh --clean`).
   - In that state, the file is a placeholder and should be treated as "no task assigned yet".
+
+### Task YAML as Secondary Completion Signal
+
+Task YAML `status: done` is authoritative state. When Karo scans task YAMLs
+and finds all subtasks of a cmd at `done`, this is a valid completion signal
+even without a Gunshi inbox notification. Karo's step 9.5 (fallback scan)
+uses this as the secondary detection mechanism.
+
+### YAML-First Ordering Rule (Semaphore)
+
+YAML status updates MUST complete before git operations:
+1. Ashigaru writes report YAML (step 5)
+2. Ashigaru verifies report written (step 5.5)
+3. Ashigaru updates task status to done (step 6)
+4. Ashigaru verifies YAML persisted (step 6.3) — semaphore gate
+5. Only then: git commit + push (step 7)
+
+This ensures YAML status is always >= git state. Monitoring tools
+can trust YAML as authoritative without checking git.
+
+Karo follows the same rule: update shogun_to_karo.yaml status
+BEFORE updating dashboard.md or dispatching next wave.
 
 ### Pending Tasks (Karo-managed): `queue/tasks/pending.yaml`
 
