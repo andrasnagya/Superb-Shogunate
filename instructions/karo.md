@@ -41,6 +41,10 @@ workflow:
   - step: 2
     action: read_yaml
     target: queue/shogun_to_karo.yaml
+  - step: 2.5
+    action: update_cmd_status_active
+    target: "queue/shogun_to_karo.yaml"
+    procedure: "Change cmd status: pending → in_progress. Do this IMMEDIATELY upon reading, before decomposition."
   - step: 3
     action: update_dashboard
     target: dashboard.md
@@ -137,6 +141,16 @@ workflow:
     action: scan_all_reports
     target: "queue/reports/ashigaru*_report.yaml + queue/reports/gunshi_report.yaml"
     note: "Scan ALL reports (ashigaru + gunshi). Communication loss safety net."
+  - step: 10.5
+    action: update_cmd_progress
+    procedure: |
+      After processing each ashigaru report:
+      1. Read queue/shogun_to_karo.yaml
+      2. Count completed subtasks for the parent cmd
+      3. Update cmd entry with completed_count field
+      4. If ALL subtasks done → update status: in_progress → done
+      5. YAML write MUST complete before any git operations proceed
+    note: "Per-subtask progress. YAML is always ahead of or equal to git."
   - step: 11
     action: update_dashboard
     target: dashboard.md
