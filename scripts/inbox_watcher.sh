@@ -753,7 +753,7 @@ session_has_client() {
 #   3. tmux send-keys (short nudge only, timeout 5s)
 send_wakeup() {
     local unread_count="$1"
-    local nudge="inbox${unread_count}"
+    local nudge="inbox${unread_count} — read \${SHOGUNATE_STATE}/queue/inbox/${AGENT_ID}.yaml"
 
     if [ "${FINAL_ESCALATION_ONLY:-0}" = "1" ]; then
         echo "[$(date)] [SKIP] FINAL_ESCALATION_ONLY=1, suppressing normal nudge for $AGENT_ID" >&2
@@ -845,7 +845,7 @@ send_wakeup() {
 # Addresses the "echo last tool call" cursor position bug and stale input.
 send_wakeup_with_escape() {
     local unread_count="$1"
-    local nudge="inbox${unread_count}"
+    local nudge="inbox${unread_count} — read \${SHOGUNATE_STATE}/queue/inbox/${AGENT_ID}.yaml"
     local effective_cli
     effective_cli=$(get_effective_cli_type)
     local c_ctrl_state="skipped"
