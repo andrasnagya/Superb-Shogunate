@@ -52,6 +52,10 @@ workflow:
   - step: 5
     action: write_report
     target: "queue/reports/ashigaru{N}_report.yaml"
+  - step: 5.5
+    action: verify_report_written
+    procedure: "Read queue/reports/ashigaru{N}_report.yaml back. If missing or empty, retry write once."
+    note: "Prevents silent report loss that breaks the Gunshi→Karo notification chain."
   - step: 6
     action: update_status
     value: done
@@ -74,6 +78,15 @@ workflow:
     method: "bash scripts/inbox_write.sh"
     mandatory: true
     note: "Changed from karo to gunshi. Gunshi now handles quality check + dashboard."
+  - step: 9.2
+    action: gunshi_notify_retry
+    procedure: |
+      After sending inbox_write to Gunshi (step 9), wait up to 2 minutes.
+      If no acknowledgment or new task arrives in own inbox within 2 minutes:
+      1. Re-send: bash scripts/inbox_write.sh gunshi "Ashigaru {N}, retry: mission complete. Requesting quality check." report_received ashigaru{N}
+      2. Then proceed to step 9.5 (check_inbox) and go idle normally.
+      Do NOT wait longer — Karo's fallback (step 9.5) handles extended failures.
+    note: "One retry from ashigaru side. Cheap insurance if first inbox_write delivery failed."
   - step: 9.5
     action: check_inbox
     target: "queue/inbox/ashigaru{N}.yaml"
