@@ -627,7 +627,14 @@ tmux set-option -g aggressive-resize on
 SHOGUN_PROMPT=$(generate_prompt "shogun" "magenta" "$SHELL_SETTING")
 # Shogun stays in SCRIPT_DIR (plugin cache — already trusted by Claude Code)
 # Mutable state accessed via absolute paths: ${SHOGUNATE_STATE}/queue/, etc.
-tmux send-keys -t shogun:main "cd \"$(pwd)\" && export SHOGUNATE_STATE=\"${SHOGUNATE_STATE}\" && export PS1='${SHOGUN_PROMPT}' && clear" Enter
+# File-based env setup (safe from shell metacharacter issues)
+_shogun_safe_prompt=$(printf '%s' "${SHOGUN_PROMPT}" | sed "s/'/'\\\\''/g")
+cat > "${SHOGUNATE_STATE}/ipc/env/shogun.env" << ENVEOF
+export SHOGUNATE_STATE="${SHOGUNATE_STATE}"
+export PS1='${_shogun_safe_prompt}'
+cd "$(pwd)"
+ENVEOF
+tmux send-keys -t shogun:main "source ${SHOGUNATE_STATE}/ipc/env/shogun.env && clear" Enter
 tmux select-pane -t shogun:main -P 'bg=#002b36'  # Shogun's Solarized Dark
 tmux set-option -p -t shogun:main @agent_id "shogun"
 
@@ -743,10 +750,22 @@ for i in "${!AGENT_IDS[@]}"; do
     # Ashigaru → PROJECT_PATH (if provided), Karo/Gunshi → SCRIPT_DIR (plugin cache, already trusted)
     # All agents get SHOGUNATE_STATE env var for absolute paths to mutable state
     _agent_id="${AGENT_IDS[$i]}"
+    # File-based env setup (safe from shell metacharacter issues)
+    _agent_safe_prompt=$(printf '%s' "${PROMPT_STR}" | sed "s/'/'\\\\''/g")
     if [[ -n "$PROJECT_PATH" && "$_agent_id" == ashigaru* ]]; then
-        tmux send-keys -t "multiagent:agents.${p}" "cd \"${PROJECT_PATH}\" && export SHOGUNATE_STATE=\"${SHOGUNATE_STATE}\" && export PS1='${PROMPT_STR}' && clear" Enter
+        cat > "${SHOGUNATE_STATE}/ipc/env/${_agent_id}.env" << ENVEOF
+export SHOGUNATE_STATE="${SHOGUNATE_STATE}"
+export PS1='${_agent_safe_prompt}'
+cd "${PROJECT_PATH}"
+ENVEOF
+        tmux send-keys -t "multiagent:agents.${p}" "source ${SHOGUNATE_STATE}/ipc/env/${_agent_id}.env && clear" Enter
     else
-        tmux send-keys -t "multiagent:agents.${p}" "cd \"$(pwd)\" && export SHOGUNATE_STATE=\"${SHOGUNATE_STATE}\" && export PS1='${PROMPT_STR}' && clear" Enter
+        cat > "${SHOGUNATE_STATE}/ipc/env/${_agent_id}.env" << ENVEOF
+export SHOGUNATE_STATE="${SHOGUNATE_STATE}"
+export PS1='${_agent_safe_prompt}'
+cd "$(pwd)"
+ENVEOF
+        tmux send-keys -t "multiagent:agents.${p}" "source ${SHOGUNATE_STATE}/ipc/env/${_agent_id}.env && clear" Enter
     fi
 done
 
