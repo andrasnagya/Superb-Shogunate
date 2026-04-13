@@ -118,6 +118,21 @@ workflow:
     from: gunshi
     via: inbox
     note: "Gunshi reports QC results. Ashigaru no longer reports directly to Karo."
+  - step: 9.5
+    action: fallback_completion_scan
+    trigger: "No Gunshi inbox within 5 minutes of last dispatch"
+    procedure: |
+      1. Read queue/tasks/ashigaru*.yaml — count status: done
+      2. Read queue/reports/ashigaru*_report.yaml — check for unprocessed reports
+      3. If completed reports found with no Gunshi QC:
+         a. Re-trigger Gunshi: bash scripts/inbox_write.sh gunshi "Karo fallback: QC needed for {task_ids}." qc_request karo
+         b. Wait up to 5 minutes for Gunshi response
+         c. If no response → retry Gunshi once more (same command)
+         d. Wait up to 5 minutes again
+         e. If still no response after 2 retries → proceed to step 10 (process reports directly, skip QC)
+         f. Log: "Fallback triggered — Gunshi chain broken after 2 retries"
+      4. This is a SAFETY NET, not the primary path. Primary: Gunshi inbox wakeup.
+    note: "Prevents indefinite stall. Tries to preserve QC chain before bypassing."
   - step: 10
     action: scan_all_reports
     target: "queue/reports/ashigaru*_report.yaml + queue/reports/gunshi_report.yaml"
