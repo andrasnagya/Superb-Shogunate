@@ -177,6 +177,6 @@ python3 -c "
 import json
 count = $UNREAD_COUNT
 summary = '''$SUMMARY'''
-reason = f'{count} unread inbox messages. Read queue/inbox/${AGENT_ID}.yaml and process them. Contents: {summary}'
+reason = f'{count} unread inbox messages. Read ${{SHOGUNATE_STATE}}/queue/inbox/${AGENT_ID}.yaml and process them. Contents: {summary}'
 print(json.dumps({'decision': 'block', 'reason': reason}, ensure_ascii=False))
-" 2>/dev/null || echo "{\"decision\":\"block\",\"reason\":\"${UNREAD_COUNT} unread inbox messages. Read queue/inbox/${AGENT_ID}.yaml and process them.\"}"
+" 2>/dev/null || echo "{\"decision\":\"block\",\"reason\":\"${UNREAD_COUNT} unread inbox messages. Read ${SHOGUNATE_STATE}/queue/inbox/${AGENT_ID}.yaml and process them.\"}"
