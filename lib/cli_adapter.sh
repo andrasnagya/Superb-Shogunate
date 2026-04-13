@@ -349,6 +349,9 @@ get_startup_prompt() {
         codex)
             echo "Session Start — do ALL of this in one turn, do NOT stop early: 1) tmux display-message -t \"\$TMUX_PANE\" -p '#{@agent_id}' to identify yourself. 2) Read queue/tasks/${agent_id}.yaml. 3) Read queue/inbox/${agent_id}.yaml, mark read:true. 4) Read files listed in context_files. 5) Execute the assigned task to completion — edit files, run commands, write reports. Keep working until the task is done."
             ;;
+        claude)
+            echo "If text like 'inbox3' appears at your prompt, it is a wake-up signal. Read \${SHOGUNATE_STATE}/queue/inbox/${agent_id}.yaml immediately and process unread messages."
+            ;;
         *)
             echo ""
             ;;
