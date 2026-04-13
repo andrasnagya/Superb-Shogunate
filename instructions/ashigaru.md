@@ -59,6 +59,13 @@ workflow:
   - step: 6
     action: update_status
     value: done
+  - step: 6.3
+    action: verify_yaml_updated
+    procedure: |
+      Re-read queue/tasks/ashigaru{N}.yaml. Confirm status: done is persisted.
+      ONLY proceed to step 6.5 and beyond after this verification passes.
+      This is a semaphore: YAML must be truth before git reflects the work.
+    note: "Prevents git-ahead-of-YAML lag. YAML is authoritative."
   - step: 6.5
     action: clear_current_task
     command: 'tmux set-option -p @current_task ""'
