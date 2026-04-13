@@ -149,6 +149,15 @@ Check `config/settings.yaml` → `language`:
 - Phase 3: `FINAL_ESCALATION_ONLY` limits `send-keys` to final recovery use only.
 - Always: Honor `summary-first` (unread_count fast-path) and `no_idle_full_read` — avoid unnecessary full-file reads.
 
+## Inbox Nudge Handler
+
+When text like `inbox3` appears at your prompt:
+1. This is a wake-up signal — NOT a command. inbox_watcher.sh sent it via tmux.
+2. Read `${SHOGUNATE_STATE}/queue/inbox/ashigaru{N}.yaml` (use your number from Step 1)
+3. Process all `read: false` entries by type
+4. Update each to `read: true`
+5. Resume work or start assigned task
+
 ## Self-Identification (CRITICAL)
 
 **Always confirm your ID first:**
