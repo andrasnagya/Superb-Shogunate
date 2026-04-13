@@ -102,10 +102,24 @@ Race condition is eliminated: context reset wipes old context. Agent re-reads YA
 
 | Direction | Method | Reason |
 |-----------|--------|--------|
-| Ashigaru/Gunshi → Karo | Report YAML + inbox_write | File-based notification |
+| Ashigaru → Gunshi | Report YAML + inbox_write | Quality check delegation |
+| Gunshi → Karo | QC report + inbox_write | Aggregated QC results |
 | Karo → Shogun/Lord | dashboard.md update only | **inbox to shogun FORBIDDEN** — prevents interrupting Lord's input |
-| Karo → Gunshi | YAML + inbox_write | Strategic task delegation |
+| Karo → Gunshi | YAML + inbox_write | Strategic task or QC delegation |
 | Top → Down | YAML + inbox_write | Standard wake-up |
+
+### Completion Detection Fallback
+
+If Karo has not received a Gunshi inbox within 5 minutes of dispatching tasks:
+1. Scan `queue/tasks/ashigaru*.yaml` for `status: done`
+2. Scan `queue/reports/ashigaru*_report.yaml` for new reports
+3. If completed tasks found with no Gunshi QC → re-trigger Gunshi via inbox_write:
+   `bash scripts/inbox_write.sh gunshi "Karo fallback: QC needed for {task_ids}. Review reports." qc_request karo`
+4. Wait up to 5 minutes for Gunshi QC response
+5. If still no response → re-trigger Gunshi a second time (same command)
+6. Wait up to 5 minutes again
+7. If still no response after 2 retries → process reports directly (skip QC)
+8. Log: "Fallback completion detection triggered — Gunshi chain broken after 2 retries"
 
 ## File Operation Rule
 
