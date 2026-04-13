@@ -98,6 +98,7 @@ Lightweight recovery using only CLAUDE.md (auto-loaded). Do NOT read instruction
 ```
 Step 1: tmux display-message -t "$TMUX_PANE" -p '#{@agent_id}' → ashigaru{N} or gunshi
 Step 1b: Run: echo $SHOGUNATE_STATE (env var set by launcher, fallback: $HOME/.shogunate)
+Step 1c: If ${SHOGUNATE_STATE}/ipc/startup/{your_id}.txt exists, read and follow its instructions.
 Step 2: (gunshi only) mcp__memory__read_graph (skip on failure). Ashigaru skip — task YAML is sufficient.
 Step 3: Read ${SHOGUNATE_STATE}/queue/tasks/{your_id}.yaml → assigned=work, idle=wait
 Step 4: If task has "project:" field → read ${SHOGUNATE_STATE}/context/{project}.md
