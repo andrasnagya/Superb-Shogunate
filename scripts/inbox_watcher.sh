@@ -541,7 +541,12 @@ send_cli_command() {
         timeout 5 tmux send-keys -t "$PANE_TARGET" C-c 2>/dev/null || true
         sleep 0.5
     fi
-    timeout 5 tmux send-keys -t "$PANE_TARGET" "$actual_cmd" 2>/dev/null || true
+    if [[ ${#actual_cmd} -gt 20 ]] || [[ "$actual_cmd" =~ [\$\"\'\|&\;] ]]; then
+        echo "$actual_cmd" > "${SHOGUNATE_STATE}/ipc/cmd_${AGENT_ID}.txt"
+        timeout 5 tmux send-keys -t "$PANE_TARGET" "source ${SHOGUNATE_STATE}/ipc/cmd_${AGENT_ID}.txt" 2>/dev/null || true
+    else
+        timeout 5 tmux send-keys -t "$PANE_TARGET" "$actual_cmd" 2>/dev/null || true
+    fi
     # /clear needs longer gap before Enter — CLI prompt may not be ready at 0.3s
     if [[ "$actual_cmd" == "/clear" || "$actual_cmd" == "/new" ]]; then
         sleep 1.0
@@ -592,9 +597,8 @@ send_codex_startup_prompt() {
     sleep 0.3
     timeout 5 tmux send-keys -t "$PANE_TARGET" C-u 2>/dev/null || true
     sleep 0.3
-    timeout 5 tmux send-keys -l -t "$PANE_TARGET" "$startup_prompt" 2>/dev/null || true
-    sleep 0.3
-    timeout 5 tmux send-keys -t "$PANE_TARGET" Enter 2>/dev/null || true
+    echo "$startup_prompt" > "${SHOGUNATE_STATE}/ipc/startup/${AGENT_ID}.txt"
+    # Agent reads file on next session start via CLAUDE.md Step 1c
     STARTUP_PROMPT_SENT=1
 }
 
