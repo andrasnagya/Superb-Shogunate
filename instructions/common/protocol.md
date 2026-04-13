@@ -66,8 +66,12 @@ Read-cost controls:
 
 ## Inbox Processing Protocol (karo/ashigaru/gunshi)
 
-When you receive `inboxN` (e.g. `inbox3`):
-1. `Read queue/inbox/{your_id}.yaml`
+**How the nudge arrives:** The text `inboxN` (e.g. `inbox3`) appears directly at your
+command prompt — typed by inbox_watcher.sh via tmux. It is NOT a command you need to run.
+It is a signal meaning "you have N unread messages."
+
+**When you see `inboxN` at the prompt:**
+1. Read `${SHOGUNATE_STATE}/queue/inbox/{your_id}.yaml`
 2. Find all entries with `read: false`
 3. Process each message according to its `type`
 4. Update each processed entry: `read: true` (use Edit tool)
