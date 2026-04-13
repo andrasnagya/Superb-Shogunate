@@ -94,6 +94,13 @@ Note:
 - Exception (placeholder only): `status: idle` is allowed **only** when `task_id: null` (clean start template written by `shutsujin_departure.sh --clean`).
   - In that state, the file is a placeholder and should be treated as "no task assigned yet".
 
+### Task YAML as Secondary Completion Signal
+
+Task YAML `status: done` is authoritative state. When Karo scans task YAMLs
+and finds all subtasks of a cmd at `done`, this is a valid completion signal
+even without a Gunshi inbox notification. Karo's step 9.5 (fallback scan)
+uses this as the secondary detection mechanism.
+
 ### Pending Tasks (Karo-managed): `queue/tasks/pending.yaml`
 
 - `pending_blocked`: holding area; **must not** be assigned yet
