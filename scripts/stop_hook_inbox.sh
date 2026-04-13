@@ -90,7 +90,7 @@ if [ -n "$LAST_MSG" ]; then
     NOTIFY_CONTENT=""
 
     # Completion detection
-    if echo "$LAST_MSG" | grep -qiE 'mission complete|report.*updated|task completed'; then
+    if echo "$LAST_MSG" | grep -qiE 'mission complete|report.*updated|task completed|report.*written|task.*done|work.*complete|finished.*task|report.*submitted'; then
         NOTIFY_TYPE="report_completed"
         NOTIFY_CONTENT="${AGENT_ID}, task complete. Please review the report."
     # Error detection (require verb+context to avoid false positives)
@@ -102,6 +102,11 @@ if [ -n "$LAST_MSG" ]; then
     # Send notification to karo (background, non-blocking)
     # Shogun doesn't report to karo — skip notification
     if [ -n "$NOTIFY_TYPE" ] && [ "$AGENT_ID" != "shogun" ]; then
+        # Primary: notify Gunshi (matches ashigaru.md step 9 documented flow)
+        bash "$SCRIPT_DIR/scripts/inbox_write.sh" gunshi \
+            "$NOTIFY_CONTENT" \
+            "$NOTIFY_TYPE" "$AGENT_ID" &
+        # Backup: notify Karo (redundant safety net)
         bash "$SCRIPT_DIR/scripts/inbox_write.sh" karo \
             "$NOTIFY_CONTENT" \
             "$NOTIFY_TYPE" "$AGENT_ID" &
