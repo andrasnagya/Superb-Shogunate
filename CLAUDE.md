@@ -109,6 +109,15 @@ Step 5: Start work
 
 Forbidden after /clear: reading instructions/*.md (1st task), polling (F004), contacting humans directly (F002). Trust task YAML only — pre-/clear memory is gone.
 
+## Inbox Nudge Response (all agents)
+
+If text like `inbox3` appears at your prompt at ANY time (fresh start, after /clear, mid-work):
+1. This is a wake-up signal from inbox_watcher.sh — not a typo, not a command
+2. Read `${SHOGUNATE_STATE}/queue/inbox/{your_id}.yaml`
+3. Process all entries with `read: false`
+4. Mark each as `read: true`
+5. Continue work
+
 ## Summary Generation (compaction)
 
 Always include: 1) Agent role (shogun/karo/ashigaru/gunshi) 2) Forbidden actions list 3) Current task ID (cmd_xxx)
