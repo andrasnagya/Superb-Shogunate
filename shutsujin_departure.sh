@@ -852,7 +852,7 @@ with open(f,'w') as fh: yaml.safe_dump(d, fh, default_flow_style=False, allow_un
     # Add initial prompt for Codex etc. (workaround for suggest UI freeze)
     _startup_prompt=$(get_startup_prompt "karo" 2>/dev/null)
     if [[ -n "$_startup_prompt" ]]; then
-        _karo_cmd="$_karo_cmd \"$_startup_prompt\""
+        echo "$_startup_prompt" > "${SHOGUNATE_STATE}/ipc/startup/karo.txt"
     fi
     tmux set-option -p -t "multiagent:agents.${p}" @agent_cli "$_karo_cli_type"
     tmux send-keys -t "multiagent:agents.${p}" "$_karo_cmd"
@@ -878,7 +878,7 @@ with open(f,'w') as fh: yaml.safe_dump(d, fh, default_flow_style=False, allow_un
             # Add initial prompt for Codex etc. (workaround for suggest UI freeze)
             _startup_prompt=$(get_startup_prompt "ashigaru${i}" 2>/dev/null)
             if [[ -n "$_startup_prompt" ]]; then
-                _ashi_cmd="$_ashi_cmd \"$_startup_prompt\""
+                echo "$_startup_prompt" > "${SHOGUNATE_STATE}/ipc/startup/ashigaru${i}.txt"
             fi
             tmux set-option -p -t "multiagent:agents.${p}" @agent_cli "$_ashi_cli_type"
             tmux send-keys -t "multiagent:agents.${p}" "$_ashi_cmd"
@@ -898,7 +898,7 @@ with open(f,'w') as fh: yaml.safe_dump(d, fh, default_flow_style=False, allow_un
             # Add initial prompt for Codex etc. (workaround for suggest UI freeze)
             _startup_prompt=$(get_startup_prompt "ashigaru${i}" 2>/dev/null)
             if [[ -n "$_startup_prompt" ]]; then
-                _ashi_cmd="$_ashi_cmd \"$_startup_prompt\""
+                echo "$_startup_prompt" > "${SHOGUNATE_STATE}/ipc/startup/ashigaru${i}.txt"
             fi
             tmux set-option -p -t "multiagent:agents.${p}" @agent_cli "$_ashi_cli_type"
             tmux send-keys -t "multiagent:agents.${p}" "$_ashi_cmd"
@@ -918,7 +918,7 @@ with open(f,'w') as fh: yaml.safe_dump(d, fh, default_flow_style=False, allow_un
     # Add initial prompt for Codex etc. (workaround for suggest UI freeze)
     _startup_prompt=$(get_startup_prompt "gunshi" 2>/dev/null)
     if [[ -n "$_startup_prompt" ]]; then
-        _gunshi_cmd="$_gunshi_cmd \"$_startup_prompt\""
+        echo "$_startup_prompt" > "${SHOGUNATE_STATE}/ipc/startup/gunshi.txt"
     fi
     tmux set-option -p -t "multiagent:agents.${p}" @agent_cli "$_gunshi_cli_type"
     tmux send-keys -t "multiagent:agents.${p}" "$_gunshi_cmd"
