@@ -101,6 +101,21 @@ and finds all subtasks of a cmd at `done`, this is a valid completion signal
 even without a Gunshi inbox notification. Karo's step 9.5 (fallback scan)
 uses this as the secondary detection mechanism.
 
+### YAML-First Ordering Rule (Semaphore)
+
+YAML status updates MUST complete before git operations:
+1. Ashigaru writes report YAML (step 5)
+2. Ashigaru verifies report written (step 5.5)
+3. Ashigaru updates task status to done (step 6)
+4. Ashigaru verifies YAML persisted (step 6.3) — semaphore gate
+5. Only then: git commit + push (step 7)
+
+This ensures YAML status is always >= git state. Monitoring tools
+can trust YAML as authoritative without checking git.
+
+Karo follows the same rule: update shogun_to_karo.yaml status
+BEFORE updating dashboard.md or dispatching next wave.
+
 ### Pending Tasks (Karo-managed): `queue/tasks/pending.yaml`
 
 - `pending_blocked`: holding area; **must not** be assigned yet
