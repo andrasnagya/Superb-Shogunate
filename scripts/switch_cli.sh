@@ -383,7 +383,12 @@ wait_for_shell_prompt "$PANE_TARGET"
 
 # Step 5: Send new CLI command
 log "Launching new CLI: ${TARGET_CMD}"
-tmux send-keys -t "$PANE_TARGET" "$TARGET_CMD" 2>/dev/null || true
+if [[ "$TARGET_CMD" =~ ^[a-zA-Z0-9_./ -]+$ ]]; then
+    tmux send-keys -t "$PANE_TARGET" "$TARGET_CMD" 2>/dev/null || true
+else
+    echo "$TARGET_CMD" > "${SHOGUNATE_STATE}/ipc/cmd_${AGENT_ID}.txt"
+    tmux send-keys -t "$PANE_TARGET" "bash ${SHOGUNATE_STATE}/ipc/cmd_${AGENT_ID}.txt" 2>/dev/null || true
+fi
 sleep 0.3
 tmux send-keys -t "$PANE_TARGET" Enter 2>/dev/null || true
 
